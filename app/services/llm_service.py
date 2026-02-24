@@ -1,23 +1,10 @@
-from app.config import (
-    PROVIDER,
-    GEMINI_API_KEY, GEMINI_MODEL,
-    ANTHROPIC_API_KEY, ANTHROPIC_MODEL,
-    MAX_TOKENS,
-)
+from google import genai
+from app.config import GEMINI_API_KEY, GEMINI_MODEL, MAX_TOKENS
 from app.prompts.system_prompt import SYSTEM_PROMPT
 
 
 def generate_article(messages: list[dict]) -> str:
-    """Generate full response from LLM. Supports Gemini and Anthropic."""
-    if PROVIDER == "gemini":
-        return _generate_gemini(messages)
-    else:
-        return _generate_anthropic(messages)
-
-
-def _generate_gemini(messages: list[dict]) -> str:
-    from google import genai
-
+    """Generate article using Google Gemini."""
     client = genai.Client(api_key=GEMINI_API_KEY)
 
     contents = []
@@ -36,18 +23,3 @@ def _generate_gemini(messages: list[dict]) -> str:
     )
 
     return response.text
-
-
-def _generate_anthropic(messages: list[dict]) -> str:
-    import anthropic
-
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-
-    response = client.messages.create(
-        model=ANTHROPIC_MODEL,
-        max_tokens=MAX_TOKENS,
-        system=SYSTEM_PROMPT,
-        messages=messages,
-    )
-
-    return response.content[0].text
