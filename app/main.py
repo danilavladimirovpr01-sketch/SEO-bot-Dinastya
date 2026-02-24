@@ -1,14 +1,13 @@
 import uuid
-import json
 import io
-from fastapi import FastAPI, Request, UploadFile, File
+from fastapi import FastAPI, UploadFile, File
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from docx import Document
 
 from app.prompts.templates import build_prompt
-from app.services.llm_service import generate_article_stream
+from app.services.llm_service import generate_article
 
 app = FastAPI(title="SEO Bot — Династия")
 
@@ -32,6 +31,10 @@ class ArticleRequest(BaseModel):
 class ChatMessage(BaseModel):
     session_id: str
     message: str
+
+
+class BriefTextRequest(BaseModel):
+    text: str
 
 
 @app.get("/")
@@ -58,7 +61,7 @@ async def upload_brief(file: UploadFile = File(...)):
 
 @app.post("/api/generate")
 async def generate(req: ArticleRequest):
-    """Generate a new article from a brief form. Returns a streaming response."""
+    """Generate a new article from a brief form."""
     session_id = str(uuid.uuid4())
 
     user_prompt = build_prompt(
@@ -75,25 +78,17 @@ async def generate(req: ArticleRequest):
     messages = [{"role": "user", "content": user_prompt}]
     sessions[session_id] = messages.copy()
 
-    async def stream():
-        full_response = ""
-        async for chunk in generate_article_stream(messages):
-            full_response += chunk
-            yield f"data: {json.dumps({'text': chunk}, ensure_ascii=False)}\n\n"
-
-        sessions[session_id].append({"role": "assistant", "content": full_response})
-        yield f"data: {json.dumps({'done': True, 'session_id': session_id}, ensure_ascii=False)}\n\n"
-
-    return StreamingResponse(stream(), media_type="text/event-stream")
-
-
-class BriefTextRequest(BaseModel):
-    text: str
+    try:
+        result = generate_article(messages)
+        sessions[session_id].append({"role": "assistant", "content": result})
+        return {"text": result, "session_id": session_id}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.post("/api/generate-from-brief")
 async def generate_from_brief(req: BriefTextRequest):
-    """Generate an article from uploaded brief text. Returns a streaming response."""
+    """Generate an article from uploaded brief text."""
     session_id = str(uuid.uuid4())
 
     user_prompt = f"Вот ТЗ на статью. Напиши статью строго по этому ТЗ:\n\n{req.text}"
@@ -101,42 +96,25 @@ async def generate_from_brief(req: BriefTextRequest):
     messages = [{"role": "user", "content": user_prompt}]
     sessions[session_id] = messages.copy()
 
-    async def stream():
-        full_response = ""
-        async for chunk in generate_article_stream(messages):
-            full_response += chunk
-            yield f"data: {json.dumps({'text': chunk}, ensure_ascii=False)}\n\n"
-
-        sessions[session_id].append({"role": "assistant", "content": full_response})
-        yield f"data: {json.dumps({'done': True, 'session_id': session_id}, ensure_ascii=False)}\n\n"
-
-    return StreamingResponse(stream(), media_type="text/event-stream")
+    try:
+        result = generate_article(messages)
+        sessions[session_id].append({"role": "assistant", "content": result})
+        return {"text": result, "session_id": session_id}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.post("/api/chat")
 async def chat(req: ChatMessage):
     """Continue conversation for article refinement."""
     if req.session_id not in sessions:
-        return {"error": "Сессия не найдена. Сгенерируйте статью заново."}
+        return JSONResponse(status_code=404, content={"error": "Сессия не найдена. Сгенерируйте статью заново."})
 
     sessions[req.session_id].append({"role": "user", "content": req.message})
 
-    async def stream():
-        full_response = ""
-        async for chunk in generate_article_stream(sessions[req.session_id]):
-            full_response += chunk
-            yield f"data: {json.dumps({'text': chunk}, ensure_ascii=False)}\n\n"
-
-        sessions[req.session_id].append({"role": "assistant", "content": full_response})
-        yield f"data: {json.dumps({'done': True}, ensure_ascii=False)}\n\n"
-
-    return StreamingResponse(stream(), media_type="text/event-stream")
-
-
-@app.get("/api/sessions")
-async def list_sessions():
-    """List active sessions."""
-    return {
-        sid: {"messages_count": len(msgs), "topic": msgs[0]["content"][:100]}
-        for sid, msgs in sessions.items()
-    }
+    try:
+        result = generate_article(sessions[req.session_id])
+        sessions[req.session_id].append({"role": "assistant", "content": result})
+        return {"text": result}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})

@@ -34,7 +34,6 @@ async function handleFile(file) {
         const text = await file.text();
         showBriefPreview(text);
     } else {
-        // Upload DOCX to server for parsing
         const formData = new FormData();
         formData.append("file", file);
 
@@ -78,15 +77,14 @@ async function generateFromFile() {
     showResultArea();
     document.getElementById("generateFromFileBtn").disabled = true;
 
-    fullResponseText = "";
-
     try {
         const response = await fetch("/api/generate-from-brief", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text }),
         });
-        await readStream(response);
+        const data = await response.json();
+        handleResponse(data);
     } catch (err) {
         document.getElementById("articleContent").innerHTML =
             `<p style="color:red">Ошибка: ${err.message}</p>`;
@@ -119,21 +117,35 @@ async function generateArticle() {
     showResultArea();
     document.getElementById("generateBtn").disabled = true;
 
-    fullResponseText = "";
-
     try {
         const response = await fetch("/api/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
         });
-        await readStream(response);
+        const data = await response.json();
+        handleResponse(data);
     } catch (err) {
         document.getElementById("articleContent").innerHTML =
             `<p style="color:red">Ошибка: ${err.message}</p>`;
     }
 
     document.getElementById("generateBtn").disabled = false;
+}
+
+function handleResponse(data) {
+    if (data.error) {
+        document.getElementById("articleContent").innerHTML =
+            `<p style="color:red">Ошибка: ${data.error}</p>`;
+        return;
+    }
+
+    fullResponseText = data.text;
+    if (data.session_id) {
+        currentSessionId = data.session_id;
+    }
+    renderArticle(fullResponseText);
+    document.getElementById("chatSection").style.display = "block";
 }
 
 function showResultArea() {
@@ -162,58 +174,27 @@ async function sendChat() {
         '<div class="loading">Обновляю статью</div>';
     document.getElementById("metaBlock").style.display = "none";
 
-    fullResponseText = "";
-
     try {
         const response = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ session_id: currentSessionId, message }),
         });
-        await readStream(response);
+        const data = await response.json();
+
+        if (data.error) {
+            document.getElementById("articleContent").innerHTML =
+                `<p style="color:red">Ошибка: ${data.error}</p>`;
+        } else {
+            fullResponseText = data.text;
+            renderArticle(fullResponseText);
+        }
     } catch (err) {
         document.getElementById("articleContent").innerHTML =
             `<p style="color:red">Ошибка: ${err.message}</p>`;
     }
 
     document.getElementById("sendBtn").disabled = false;
-}
-
-// --- Streaming ---
-async function readStream(response) {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const text = decoder.decode(value, { stream: true });
-        const lines = text.split("\n");
-
-        for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-
-            const jsonStr = line.slice(6);
-            try {
-                const data = JSON.parse(jsonStr);
-
-                if (data.text) {
-                    fullResponseText += data.text;
-                    renderArticle(fullResponseText);
-                }
-
-                if (data.done) {
-                    if (data.session_id) {
-                        currentSessionId = data.session_id;
-                    }
-                    document.getElementById("chatSection").style.display = "block";
-                }
-            } catch (e) {
-                // skip malformed JSON
-            }
-        }
-    }
 }
 
 // --- Rendering ---

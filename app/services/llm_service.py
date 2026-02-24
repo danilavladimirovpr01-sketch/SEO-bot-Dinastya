@@ -7,28 +7,25 @@ from app.config import (
 from app.prompts.system_prompt import SYSTEM_PROMPT
 
 
-async def generate_article_stream(messages: list[dict]):
-    """Stream response from LLM, yielding text chunks. Supports Gemini and Anthropic."""
+def generate_article(messages: list[dict]) -> str:
+    """Generate full response from LLM. Supports Gemini and Anthropic."""
     if PROVIDER == "gemini":
-        async for chunk in _stream_gemini(messages):
-            yield chunk
+        return _generate_gemini(messages)
     else:
-        async for chunk in _stream_anthropic(messages):
-            yield chunk
+        return _generate_anthropic(messages)
 
 
-async def _stream_gemini(messages: list[dict]):
+def _generate_gemini(messages: list[dict]) -> str:
     from google import genai
 
     client = genai.Client(api_key=GEMINI_API_KEY)
 
-    # Build contents: system instruction is separate, user/assistant messages go into contents
     contents = []
     for msg in messages:
         role = "user" if msg["role"] == "user" else "model"
         contents.append({"role": role, "parts": [{"text": msg["content"]}]})
 
-    response = client.models.generate_content_stream(
+    response = client.models.generate_content(
         model=GEMINI_MODEL,
         contents=contents,
         config={
@@ -38,21 +35,19 @@ async def _stream_gemini(messages: list[dict]):
         },
     )
 
-    for chunk in response:
-        if chunk.text:
-            yield chunk.text
+    return response.text
 
 
-async def _stream_anthropic(messages: list[dict]):
+def _generate_anthropic(messages: list[dict]) -> str:
     import anthropic
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-    with client.messages.stream(
+    response = client.messages.create(
         model=ANTHROPIC_MODEL,
         max_tokens=MAX_TOKENS,
         system=SYSTEM_PROMPT,
         messages=messages,
-    ) as stream:
-        for text in stream.text_stream:
-            yield text
+    )
+
+    return response.content[0].text
