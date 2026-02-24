@@ -10,7 +10,7 @@ def generate_article(messages: list[dict]) -> str:
     response = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers={
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Authorization": f"Bearer {OPENROUTER_API_KEY.strip()}",
             "Content-Type": "application/json",
         },
         json={
