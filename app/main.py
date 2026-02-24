@@ -24,6 +24,9 @@ class ArticleRequest(BaseModel):
     lsi_keywords: str = ""
     word_count: int = 3000
     structure: str = ""
+    aeo_questions: str = ""
+    meta_title: str = ""
+    meta_description: str = ""
     competitors: str = ""
     additional: str = ""
 
@@ -71,6 +74,9 @@ async def generate(req: ArticleRequest):
         lsi_keywords=req.lsi_keywords,
         word_count=req.word_count,
         structure=req.structure,
+        aeo_questions=req.aeo_questions,
+        meta_title=req.meta_title,
+        meta_description=req.meta_description,
         competitors=req.competitors,
         additional=req.additional,
     )

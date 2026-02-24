@@ -110,6 +110,9 @@ async function generateArticle() {
         lsi_keywords: document.getElementById("lsiKeywords").value.trim(),
         word_count: parseInt(document.getElementById("wordCount").value) || 3000,
         structure: document.getElementById("structure").value.trim(),
+        aeo_questions: document.getElementById("aeoQuestions").value.trim(),
+        meta_title: document.getElementById("metaTitleInput").value.trim(),
+        meta_description: document.getElementById("metaDescInput").value.trim(),
         competitors: document.getElementById("competitors").value.trim(),
         additional: document.getElementById("additional").value.trim(),
     };
