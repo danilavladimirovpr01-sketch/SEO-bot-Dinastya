@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO Bot — Династия</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SEO Копирайтер</h1>
+            <p>Генерация SEO/GEO/AEO оптимизированных статей для клиники «Династия»</p>
+        </header>
+
+        <!-- Mode Tabs -->
+        <div class="mode-tabs">
+            <button class="mode-tab active" onclick="switchMode('file')" id="tabFile">Загрузить ТЗ</button>
+            <button class="mode-tab" onclick="switchMode('manual')" id="tabManual">Заполнить вручную</button>
+        </div>
+
+        <!-- File Upload Mode -->
+        <div class="brief-form" id="fileForm">
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+                 ondragover="event.preventDefault(); this.classList.add('dragover')"
+                 ondragleave="this.classList.remove('dragover')"
+                 ondrop="handleDrop(event)">
+                <div class="upload-icon">+</div>
+                <p class="upload-text">Перетащите файл ТЗ сюда или нажмите для выбора</p>
+                <p class="upload-hint">.docx или .txt</p>
+                <input type="file" id="fileInput" accept=".docx,.txt" style="display:none" onchange="handleFile(this.files[0])">
+            </div>
+            <div id="filePreview" style="display:none">
+                <div class="file-info">
+                    <span id="fileName"></span>
+                    <button class="btn-remove" onclick="removeFile()">Удалить</button>
+                </div>
+                <textarea id="briefText" rows="10" placeholder="Содержимое ТЗ появится здесь. Можете отредактировать перед генерацией."></textarea>
+            </div>
+            <button class="btn btn-primary" id="generateFromFileBtn" onclick="generateFromFile()" disabled>
+                Сгенерировать статью по ТЗ
+            </button>
+        </div>
+
+        <!-- Manual Form Mode -->
+        <div class="brief-form" id="briefForm" style="display:none">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="topic">Тема статьи *</label>
+                    <input type="text" id="topic" placeholder="Например: Лечение кариеса у взрослых">
+                </div>
+                <div class="form-group">
+                    <label for="contentType">Тип контента</label>
+                    <select id="contentType">
+                        <option value="article">Информационная статья</option>
+                        <option value="service">Страница услуги</option>
+                        <option value="faq">FAQ</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="mainKeywords">Основные ключевые слова *</label>
+                    <input type="text" id="mainKeywords" placeholder="лечение кариеса, кариес зубов, лечить кариес">
+                </div>
+                <div class="form-group">
+                    <label for="lsiKeywords">LSI-ключи</label>
+                    <input type="text" id="lsiKeywords" placeholder="пломбирование, зубная боль, стоматолог">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="wordCount">Объём (слов)</label>
+                    <input type="number" id="wordCount" value="3000" min="500" max="10000" step="500">
+                </div>
+                <div class="form-group">
+                    <label for="structure">Структура (H2 заголовки, опционально)</label>
+                    <input type="text" id="structure" placeholder="Причины | Симптомы | Методы лечения | Профилактика">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="competitors">Ссылки на конкурентов (опционально)</label>
+                    <textarea id="competitors" rows="2" placeholder="https://competitor1.ru/article&#10;https://competitor2.ru/article"></textarea>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="additional">Дополнительные инструкции</label>
+                    <textarea id="additional" rows="2" placeholder="Упомянуть врача Иванова И.И., добавить блок с ценами..."></textarea>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="generateBtn" onclick="generateArticle()">
+                Сгенерировать статью
+            </button>
+        </div>
+
+        <!-- Result Area -->
+        <div class="result-area" id="resultArea">
+            <div class="result-header">
+                <h2>Результат</h2>
+                <div>
+                    <button class="btn-copy" onclick="copyArticle()">Копировать</button>
+                    <button class="btn-new" onclick="newArticle()">Новая статья</button>
+                </div>
+            </div>
+
+            <div class="meta-block" id="metaBlock" style="display:none">
+                <p><strong>Title:</strong> <span id="metaTitle"></span></p>
+                <p><strong>Description:</strong> <span id="metaDesc"></span></p>
+            </div>
+
+            <div class="article-content" id="articleContent">
+                <div class="loading" id="loadingIndicator">Генерирую статью</div>
+            </div>
+
+            <!-- Chat for iterations -->
+            <div class="chat-section" id="chatSection" style="display:none">
+                <h3>Доработка статьи</h3>
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="Добавь ключ X, перепиши введение, сократи до 2000 слов..."
+                           onkeydown="if(event.key==='Enter')sendChat()">
+                    <button class="btn-send" id="sendBtn" onclick="sendChat()">Отправить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
