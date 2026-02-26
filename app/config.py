@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+MODEL = "gemini-2.5-flash"
 
 MAX_TOKENS = 8192

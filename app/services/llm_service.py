@@ -1,16 +1,16 @@
 import requests
-from app.config import OPENROUTER_API_KEY, MODEL, MAX_TOKENS
+from app.config import GEMINI_API_KEY, MODEL, MAX_TOKENS
 from app.prompts.system_prompt import SYSTEM_PROMPT
 
 
 def generate_article(messages: list[dict]) -> str:
-    """Generate article using Gemini via OpenRouter."""
+    """Generate article using Google Gemini API (OpenAI-compatible endpoint)."""
     full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
 
     response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
+        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
         headers={
-            "Authorization": f"Bearer {OPENROUTER_API_KEY.strip()}",
+            "Authorization": f"Bearer {GEMINI_API_KEY.strip()}",
             "Content-Type": "application/json",
         },
         json={
