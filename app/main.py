@@ -1,10 +1,13 @@
 import uuid
 import io
+import re
 from fastapi import FastAPI, UploadFile, File
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from docx import Document
+from docx.shared import Pt, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from app.prompts.templates import build_prompt
 from app.services.llm_service import generate_article
@@ -19,9 +22,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 class ArticleRequest(BaseModel):
     topic: str
+    h1: str = ""
     content_type: str = "article"
     main_keywords: str
-    lsi_keywords: str = ""
+    thematic_words: str = ""
+    highlight_words: str = ""
     word_count: int = 3000
     structure: str = ""
     aeo_questions: str = ""
@@ -37,6 +42,10 @@ class ChatMessage(BaseModel):
 
 
 class BriefTextRequest(BaseModel):
+    text: str
+
+
+class ExportRequest(BaseModel):
     text: str
 
 
@@ -69,9 +78,11 @@ async def generate(req: ArticleRequest):
 
     user_prompt = build_prompt(
         topic=req.topic,
+        h1=req.h1,
         content_type=req.content_type,
         main_keywords=req.main_keywords,
-        lsi_keywords=req.lsi_keywords,
+        thematic_words=req.thematic_words,
+        highlight_words=req.highlight_words,
         word_count=req.word_count,
         structure=req.structure,
         aeo_questions=req.aeo_questions,
@@ -133,3 +144,85 @@ async def chat(req: ChatMessage):
         return {"text": result}
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.post("/api/export-docx")
+async def export_docx(req: ExportRequest):
+    """Export article as DOCX file."""
+    doc = Document()
+
+    style = doc.styles["Normal"]
+    font = style.font
+    font.name = "Arial"
+    font.size = Pt(11)
+
+    meta_match = re.search(r"---META---([\s\S]*?)---/META---", req.text)
+    article_match = re.search(r"---ARTICLE---([\s\S]*?)---/ARTICLE---", req.text)
+
+    # Add meta block
+    if meta_match:
+        meta_text = meta_match.group(1).strip()
+        title_match = re.search(r"Title:\s*(.+)", meta_text)
+        desc_match = re.search(r"Description:\s*(.+)", meta_text)
+
+        if title_match:
+            p = doc.add_paragraph()
+            run = p.add_run(f"Title: {title_match.group(1).strip()}")
+            run.bold = True
+            run.font.size = Pt(10)
+            run.font.color.rgb = None
+
+        if desc_match:
+            p = doc.add_paragraph()
+            run = p.add_run(f"Description: {desc_match.group(1).strip()}")
+            run.bold = True
+            run.font.size = Pt(10)
+
+        doc.add_paragraph("")  # spacer
+
+    # Get article text
+    article_text = article_match.group(1).strip() if article_match else req.text
+    if not article_match:
+        article_text = re.sub(r"---META---[\s\S]*?---/META---", "", article_text)
+        article_text = article_text.replace("---ARTICLE---", "").replace("---/ARTICLE---", "").strip()
+
+    # Parse markdown and add to doc
+    for line in article_text.split("\n"):
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        if stripped.startswith("### "):
+            doc.add_heading(stripped[4:], level=3)
+        elif stripped.startswith("## "):
+            doc.add_heading(stripped[3:], level=2)
+        elif stripped.startswith("# "):
+            doc.add_heading(stripped[2:], level=1)
+        elif stripped.startswith("- ") or stripped.startswith("* "):
+            doc.add_paragraph(stripped[2:], style="List Bullet")
+        elif re.match(r"^\d+\.\s", stripped):
+            text = re.sub(r"^\d+\.\s", "", stripped)
+            doc.add_paragraph(text, style="List Number")
+        else:
+            # Handle bold/italic in paragraph
+            p = doc.add_paragraph()
+            parts = re.split(r"(\*\*.*?\*\*|\*.*?\*)", stripped)
+            for part in parts:
+                if part.startswith("**") and part.endswith("**"):
+                    run = p.add_run(part[2:-2])
+                    run.bold = True
+                elif part.startswith("*") and part.endswith("*"):
+                    run = p.add_run(part[1:-1])
+                    run.italic = True
+                else:
+                    p.add_run(part)
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": "attachment; filename=article.docx"},
+    )

@@ -105,9 +105,11 @@ async function generateArticle() {
 
     const payload = {
         topic,
+        h1: document.getElementById("h1").value.trim(),
         content_type: document.getElementById("contentType").value,
         main_keywords: mainKeywords,
-        lsi_keywords: document.getElementById("lsiKeywords").value.trim(),
+        thematic_words: document.getElementById("thematicWords").value.trim(),
+        highlight_words: document.getElementById("highlightWords").value.trim(),
         word_count: parseInt(document.getElementById("wordCount").value) || 3000,
         structure: document.getElementById("structure").value.trim(),
         aeo_questions: document.getElementById("aeoQuestions").value.trim(),
@@ -278,6 +280,33 @@ function copyArticle() {
         btn.textContent = "Скопировано!";
         setTimeout(() => (btn.textContent = "Копировать"), 2000);
     });
+}
+
+async function downloadDocx() {
+    if (!fullResponseText) return;
+
+    try {
+        const response = await fetch("/api/export-docx", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: fullResponseText }),
+        });
+
+        if (!response.ok) {
+            alert("Ошибка экспорта");
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "article.docx";
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        alert("Ошибка экспорта: " + err.message);
+    }
 }
 
 function newArticle() {

@@ -388,6 +388,7 @@ header p {
 }
 
 .btn-copy:hover { background: #e5e7eb; }
+.btn-copy + .btn-copy { margin-left: 8px; }
 
 .btn-new {
     background: transparent;

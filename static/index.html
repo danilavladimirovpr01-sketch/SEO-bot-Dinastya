@@ -45,6 +45,13 @@
         <!-- Manual Form Mode -->
         <div class="brief-form" id="briefForm" style="display:none">
             <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="h1">H1 заголовок (опционально)</label>
+                    <input type="text" id="h1" placeholder="Панические атаки: причины, симптомы и лечение в Санкт-Петербурге">
+                </div>
+            </div>
+
+            <div class="form-row">
                 <div class="form-group">
                     <label for="topic">Тема статьи *</label>
                     <input type="text" id="topic" placeholder="Например: Панические атаки: причины и лечение">
@@ -61,13 +68,20 @@
             </div>
 
             <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="mainKeywords">Ключевые фразы с частотностью * (каждая с новой строки: ключ — количество)</label>
+                    <textarea id="mainKeywords" rows="4" placeholder="панические атаки — 10&#10;паническая атака симптомы — 3&#10;лечение панических атак — 5&#10;панические атаки причины — 2"></textarea>
+                </div>
+            </div>
+
+            <div class="form-row">
                 <div class="form-group">
-                    <label for="mainKeywords">Основные ключевые слова *</label>
-                    <input type="text" id="mainKeywords" placeholder="панические атаки, паническая атака симптомы, лечение панических атак">
+                    <label for="thematicWords">Тематические слова (любая форма)</label>
+                    <textarea id="thematicWords" rows="2" placeholder="тревожное расстройство, психотерапевт, вегетососудистая дистония, невроз"></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="lsiKeywords">LSI-ключи</label>
-                    <input type="text" id="lsiKeywords" placeholder="тревожное расстройство, психотерапевт, вегетососудистая дистония">
+                    <label for="highlightWords">Слова из подсветки в выдаче</label>
+                    <textarea id="highlightWords" rows="2" placeholder="панические, атаки, лечение, причины, симптомы"></textarea>
                 </div>
             </div>
 
@@ -125,6 +139,7 @@
                 <h2>Результат</h2>
                 <div>
                     <button class="btn-copy" onclick="copyArticle()">Копировать</button>
+                    <button class="btn-copy" onclick="downloadDocx()">Скачать DOCX</button>
                     <button class="btn-new" onclick="newArticle()">Новая статья</button>
                 </div>
             </div>
