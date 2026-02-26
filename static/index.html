@@ -53,6 +53,7 @@
                     <label for="contentType">Тип контента</label>
                     <select id="contentType">
                         <option value="article">Информационная статья</option>
+                        <option value="disease">Страница заболевания</option>
                         <option value="service">Страница услуги</option>
                         <option value="faq">FAQ</option>
                     </select>
@@ -77,14 +78,14 @@
                 </div>
                 <div class="form-group">
                     <label for="structure">Структура (H2 заголовки, опционально)</label>
-                    <input type="text" id="structure" placeholder="Причины | Симптомы | Методы лечения | Профилактика">
+                    <textarea id="structure" rows="3" placeholder="Что такое [тема]&#10;Причины и факторы риска&#10;Симптомы&#10;Диагностика&#10;Лечение&#10;Профилактика"></textarea>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group full-width">
                     <label for="aeoQuestions">AEO: вопросы для FAQ-блока (опционально)</label>
-                    <textarea id="aeoQuestions" rows="3" placeholder="Сколько стоит лечение кариеса?&#10;Больно ли лечить кариес?&#10;Как долго длится лечение?"></textarea>
+                    <textarea id="aeoQuestions" rows="3" placeholder="Как понять, что пора обратиться к психотерапевту?&#10;Можно ли вылечить тревожное расстройство?&#10;Сколько длится курс психотерапии?"></textarea>
                 </div>
             </div>
 
@@ -131,6 +132,10 @@
             <div class="meta-block" id="metaBlock" style="display:none">
                 <p><strong>Title:</strong> <span id="metaTitle"></span></p>
                 <p><strong>Description:</strong> <span id="metaDesc"></span></p>
+            </div>
+
+            <div class="char-counter" id="charCounter" style="display:none">
+                <span>Символов без пробелов: <strong id="charCount">0</strong></span>
             </div>
 
             <div class="article-content" id="articleContent">

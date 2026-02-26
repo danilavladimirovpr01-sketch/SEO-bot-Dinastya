@@ -24,6 +24,10 @@ def generate_article(messages: list[dict]) -> str:
 
     data = response.json()
 
+    # Gemini API may return a JSON array instead of object
+    if isinstance(data, list):
+        data = data[0]
+
     if "error" in data:
         raise Exception(data["error"].get("message", str(data["error"])))
 

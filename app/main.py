@@ -9,7 +9,7 @@ from docx import Document
 from app.prompts.templates import build_prompt
 from app.services.llm_service import generate_article
 
-app = FastAPI(title="SEO Bot — Династия")
+app = FastAPI(title="SEO Bot — Деликатная Терапия Души")
 
 # In-memory session storage (single user)
 sessions: dict[str, list[dict]] = {}
@@ -97,7 +97,16 @@ async def generate_from_brief(req: BriefTextRequest):
     """Generate an article from uploaded brief text."""
     session_id = str(uuid.uuid4())
 
-    user_prompt = f"Вот ТЗ на статью. Напиши статью строго по этому ТЗ:\n\n{req.text}"
+    user_prompt = (
+        "Вот ТЗ на статью. Напиши статью строго по этому ТЗ.\n\n"
+        "ВАЖНО:\n"
+        "- Соблюдай указанную структуру (H2/H3 заголовки)\n"
+        "- Используй все ключевые слова в точной форме и указанной частотности\n"
+        "- Соблюдай указанный объём в символах без пробелов\n"
+        "- Обеспечь логические переходы между всеми разделами\n"
+        "- Верни результат в формате ---META--- и ---ARTICLE---\n\n"
+        f"{req.text}"
+    )
 
     messages = [{"role": "user", "content": user_prompt}]
     sessions[session_id] = messages.copy()

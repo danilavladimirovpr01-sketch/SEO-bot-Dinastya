@@ -226,6 +226,12 @@ function renderArticle(text) {
     }
 
     document.getElementById("articleContent").innerHTML = markdownToHtml(articleText);
+
+    // Character counter (without spaces)
+    const plainText = articleText.replace(/[#*\-\[\]()>|`]/g, "").trim();
+    const charCount = plainText.replace(/\s/g, "").length;
+    document.getElementById("charCount").textContent = charCount.toLocaleString("ru-RU");
+    document.getElementById("charCounter").style.display = "block";
 }
 
 function markdownToHtml(md) {
