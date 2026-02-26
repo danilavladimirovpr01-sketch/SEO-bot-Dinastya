@@ -2,7 +2,7 @@ ARTICLE_TEMPLATE = """Напиши {content_type} на тему: «{topic}»
 
 Основные ключевые слова: {main_keywords}
 LSI-ключи: {lsi_keywords}
-Желаемый объём: {word_count} слов
+Желаемый объём: {word_count} символов без пробелов
 
 {structure_section}
 {aeo_section}
